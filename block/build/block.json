@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "smilitoltd/smilito-integration",
+  "version": "0.1.0",
+  "title": "Smilito Rewards",
+  "category": "smilito",
+  "keywords": [
+    "smilito",
+    "rewards"
+  ],
+  "description": "Display rewards from the Smilito rewards platform.",
+  "example": {},
+  "supports": {
+    "html": false
+  },
+  "parent": [
+    "woocommerce/cart-accepted-payment-methods-block",
+    "woocommerce/cart-cross-sells-block",
+    "woocommerce/cart-cross-sells-products-block",
+    "woocommerce/cart-express-payment-block",
+    "woocommerce/cart-items-block",
+    "woocommerce/cart-line-items-block",
+    "woocommerce/cart-order-summary-block",
+    "woocommerce/cart-order-summary-heading-block",
+    "woocommerce/cart-order-summary-shipping-block",
+    "woocommerce/cart-order-summary-subtotal-block",
+    "woocommerce/cart-order-summary-totals-block",
+    "woocommerce/cart-totals-block",
+    "woocommerce/checkout-actions-block",
+    "woocommerce/checkout-additional-information-block",
+    "woocommerce/checkout-order-summary-block",
+    "woocommerce/checkout-totals-block",
+    "woocommerce/filled-cart-block",
+    "woocommerce/proceed-to-checkout-block"
+  ],
+  "textdomain": "smilito-integration",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css",
+  "viewScript": "file:./view.js"
+}
