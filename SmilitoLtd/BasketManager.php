@@ -26,6 +26,7 @@ class BasketManager
         \add_action('woocommerce_order_status_completed', [$this, 'actionWoocommerceOrderStatusCompleted']);
         \add_action('woocommerce_order_status_processing', [$this, 'actionWoocommerceOrderStatusCompleted']);
         \add_action('woocommerce_order_status_on', [$this, 'actionWoocommerceOrderStatusCompleted']);
+        \add_action('woocommerce_order_status_changed', [$this, 'actionWoocommerceOrderStatusChanged'], 10, 3);
     }
 
     /**
@@ -194,6 +195,13 @@ class BasketManager
     public function actionWoocommerceOrderStatusCompleted($orderId): void
     {
         $this->deleteBasketId();
+    }
+
+    public function actionWoocommerceOrderStatusChanged($orderId, $from, $to): void
+    {
+        if ($from === 'pending') {
+            $this->deleteBasketId();
+        }
     }
 
 }
