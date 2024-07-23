@@ -121,13 +121,15 @@ if (!window.SmilitoIntegrationRegistered) {
 		}
 	};
 
+	const fetchedBasketData = fetchBasketData();
+
 	const getBasketValue = async () => {
-		const data = await fetchBasketData();
+		const data = await fetchedBasketData;
 		return data.basket_value;
 	};
 
 	const getBasketId = async () => {
-		const data = await fetchBasketData();
+		const data = await fetchedBasketData;
 		return data.basket_id;
 	};
 
