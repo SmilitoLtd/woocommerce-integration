@@ -21,6 +21,7 @@ class BasketManager
     public function registerHooks(): void
     {
         \add_action('woocommerce_store_api_checkout_update_order_meta', [$this, 'actionWoocommerceCheckoutUpdateOrderMeta']);
+        \add_action('woocommerce_checkout_update_order_meta', [$this, 'actionCheckoutUpdateOrderMeta']);
         \add_action('woocommerce_payment_complete', [$this, 'actionWoocommerceOrderStatusCompleted']);
         \add_action('woocommerce_order_status_completed', [$this, 'actionWoocommerceOrderStatusCompleted']);
         \add_action('woocommerce_order_status_processing', [$this, 'actionWoocommerceOrderStatusCompleted']);
@@ -162,6 +163,30 @@ class BasketManager
      */
     public function actionWoocommerceCheckoutUpdateOrderMeta(WC_Order $order): void
     {
+        if ($order->get_meta(self::ORDER_KEY_BASKET_ID)) {
+            return;
+        }
+        $order->update_meta_data(self::ORDER_KEY_BASKET_ID, $this->getBasketId());
+        $order->save();
+    }
+
+    /**
+     * Executed when starting the checkout process.
+     * We need to hook into this step to allow us to copy over integration related data.
+     * @param WC_Order|string $order
+     * @return void
+     */
+    public function actionCheckoutUpdateOrderMeta($order): void
+    {
+        if (is_string($order)) {
+            $order = \wc_get_order($order);
+        }
+        if (!($order instanceof WC_Order)) {
+            return;
+        }
+        if ($this->getBasketIdFromOrder($order)) {
+            return;
+        }
         $order->update_meta_data(self::ORDER_KEY_BASKET_ID, $this->getBasketId());
         $order->save();
     }
