@@ -81,9 +81,7 @@ class Plugin
     private function registerHooks(): void
     {
         \add_action('woocommerce_init', [$this, 'actionWoocommerceLoaded'], 10, 1);
-
         $this->adminSettings->registerHooks();
-        $this->basketManager->registerHooks();
         $this->api->registerHooks();
         $this->block->registerHooks();
     }
@@ -91,6 +89,7 @@ class Plugin
     public function actionWoocommerceLoaded(): void
     {
         $this->setupWpSession();
+        $this->basketManager->registerHooks();
     }
 
 }

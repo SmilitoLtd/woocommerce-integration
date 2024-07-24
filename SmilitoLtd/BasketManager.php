@@ -20,7 +20,14 @@ class BasketManager
 
     public function registerHooks(): void
     {
-        \add_action('woocommerce_store_api_checkout_update_order_meta', [$this, 'actionWoocommerceCheckoutUpdateOrderMeta']);
+        $wcVersion = \wc()->version;
+        if (version_compare($wcVersion, '6.3.0', '<')) {
+            \add_action('__experimental_woocommerce_blocks_checkout_update_order_meta', [$this, 'actionWoocommerceBlocksCheckoutUpdateOrderMeta']);
+        } elseif (version_compare($wcVersion, '7.2.0', '<') ) {
+            \add_action('woocommerce_blocks_checkout_update_order_meta', [$this, 'actionWoocommerceBlocksCheckoutUpdateOrderMeta']);
+        } else {
+            \add_action('woocommerce_store_api_checkout_update_order_meta', [$this, 'actionWoocommerceCheckoutUpdateOrderMeta']);
+        }
         \add_action('woocommerce_checkout_update_order_meta', [$this, 'actionCheckoutUpdateOrderMeta']);
         \add_action('woocommerce_payment_complete', [$this, 'actionWoocommerceOrderStatusCompleted']);
         \add_action('woocommerce_order_status_completed', [$this, 'actionWoocommerceOrderStatusCompleted']);
@@ -163,6 +170,15 @@ class BasketManager
      * @return void
      */
     public function actionWoocommerceCheckoutUpdateOrderMeta(WC_Order $order): void
+    {
+        if ($order->get_meta(self::ORDER_KEY_BASKET_ID)) {
+            return;
+        }
+        $order->update_meta_data(self::ORDER_KEY_BASKET_ID, $this->getBasketId());
+        $order->save();
+    }
+
+    public function actionWoocommerceBlocksCheckoutUpdateOrderMeta(WC_Order $order): void
     {
         if ($order->get_meta(self::ORDER_KEY_BASKET_ID)) {
             return;
