@@ -23,12 +23,13 @@ class BasketManager
         $wcVersion = \wc()->version;
         if (version_compare($wcVersion, '6.3.0', '<')) {
             \add_action('__experimental_woocommerce_blocks_checkout_update_order_meta', [$this, 'actionWoocommerceBlocksCheckoutUpdateOrderMeta']);
-        } elseif (version_compare($wcVersion, '7.2.0', '<') ) {
+        } elseif (version_compare($wcVersion, '7.2.0', '<')) {
             \add_action('woocommerce_blocks_checkout_update_order_meta', [$this, 'actionWoocommerceBlocksCheckoutUpdateOrderMeta']);
         } else {
             \add_action('woocommerce_store_api_checkout_update_order_meta', [$this, 'actionWoocommerceCheckoutUpdateOrderMeta']);
         }
-        \add_action('woocommerce_checkout_update_order_meta', [$this, 'actionCheckoutUpdateOrderMeta']);
+        \add_action('woocommerce_checkout_create_order', [$this, 'actionWoocommerceCheckoutCreateOrder'], 20, 2);
+        \add_action('woocommerce_checkout_update_order_meta', [$this, 'actionCheckoutUpdateOrderMeta'], 10, 2);
         \add_action('woocommerce_payment_complete', [$this, 'actionWoocommerceOrderStatusCompleted']);
         \add_action('woocommerce_order_status_completed', [$this, 'actionWoocommerceOrderStatusCompleted']);
         \add_action('woocommerce_order_status_processing', [$this, 'actionWoocommerceOrderStatusCompleted']);
@@ -171,29 +172,32 @@ class BasketManager
      */
     public function actionWoocommerceCheckoutUpdateOrderMeta(WC_Order $order): void
     {
-        if ($order->get_meta(self::ORDER_KEY_BASKET_ID)) {
-            return;
-        }
-        $order->update_meta_data(self::ORDER_KEY_BASKET_ID, $this->getBasketId());
-        $order->save();
+        $this->addBasketIdToOrder($order);
     }
 
     public function actionWoocommerceBlocksCheckoutUpdateOrderMeta(WC_Order $order): void
     {
-        if ($order->get_meta(self::ORDER_KEY_BASKET_ID)) {
-            return;
-        }
-        $order->update_meta_data(self::ORDER_KEY_BASKET_ID, $this->getBasketId());
-        $order->save();
+        $this->addBasketIdToOrder($order);
     }
 
     /**
      * Executed when starting the checkout process.
      * We need to hook into this step to allow us to copy over integration related data.
      * @param WC_Order|string $order
+     * @param $data
      * @return void
      */
-    public function actionCheckoutUpdateOrderMeta($order): void
+    public function actionCheckoutUpdateOrderMeta($order, $data): void
+    {
+        $this->addBasketIdToOrder($order);
+    }
+
+    public function actionWoocommerceCheckoutCreateOrder($order, $data)
+    {
+        $this->addBasketIdToOrder($order);
+    }
+
+    private function addBasketIdToOrder($order): void
     {
         if (is_string($order)) {
             $order = \wc_get_order($order);
