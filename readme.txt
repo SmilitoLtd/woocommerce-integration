@@ -2,7 +2,7 @@
 Contributors:      SmilitoLtd
 Tags:              block
 Tested up to:      6.6
-Stable tag:        0.1.5
+Stable tag:        0.1.6
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,9 @@ You should have received your credentials when you were onboarded with Smilito.
 If you have lost them or they are no longer working, please reach out to your Smilito contact.
 
 == Changelog ==
+
+= 0.1.6 =
+* Add handler for "woocommerce_checkout_create_order" hook.
 
 = 0.1.5 =
 * Add support for legacy woocommerce order meta hooks.
