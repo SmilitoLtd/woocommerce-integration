@@ -2,6 +2,8 @@
 
 namespace SmilitoLtd;
 
+use SmilitoLtd\Client\Client;
+
 /**
  * The base of the plugin.
  * Creates and initialises dependencies as needed.
@@ -18,6 +20,11 @@ class Plugin
      * @var BasketManager
      */
     private $basketManager;
+
+    /**
+     * @var Client
+     */
+    private $client;
 
     /**
      * @var Api
@@ -44,7 +51,8 @@ class Plugin
         // Create instances of all our classes.
         $this->configManager = new ConfigManager();
         $this->basketManager = new BasketManager();
-        $this->api = new Api($this->configManager, $this->basketManager);
+        $this->client = new Client();
+        $this->api = new Api($this->configManager, $this->basketManager, $this->client);
         $this->block = new Block();
         $this->adminSettings = new Admin();
         $this->updater = new Updater($file);

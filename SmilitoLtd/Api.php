@@ -2,6 +2,8 @@
 
 namespace SmilitoLtd;
 
+use SmilitoLtd\Client\Client;
+
 /**
  * Manages the registration and functionality of the REST API.
  */
@@ -9,8 +11,6 @@ class Api
 {
 
     private const REST_NAMESPACE = 'smilito-integration/v1';
-    private const HTTP_GET = 'GET';
-    private const HTTP_POST = 'POST';
     private const PERMISSION_ALLOW = '__return_true';
 
     /**
@@ -23,11 +23,18 @@ class Api
      */
     private $basketManager;
 
+    /**
+     * @var Client
+     */
+    private $client;
+
     public function __construct(
         ConfigManager $configManager,
-        BasketManager $basketManager
+        BasketManager $basketManager,
+        Client $client
     )
     {
+        $this->client = $client;
         $this->configManager = $configManager;
         $this->basketManager = $basketManager;
     }
@@ -55,35 +62,27 @@ class Api
     public function registerRoutes(): void
     {
         $routes = [
-            '/basket-data' => [
-                'methods' => self::HTTP_GET,
-                'callback' => [$this, 'handleGetBasketData'],
-                'permission_callback' => self::PERMISSION_ALLOW,
-            ],
-            '/login' => [
-                'methods' => self::HTTP_POST,
-                'callback' => [$this, 'handlePostLogin'],
+            '/integration-data' => [
+                'methods' => 'POST',
+                'callback' => [$this, 'handleGetIntegrationData'],
                 'permission_callback' => self::PERMISSION_ALLOW,
             ],
         ];
 
         foreach ($routes as $route => $args) {
-            register_rest_route(self::REST_NAMESPACE, $route, $args);
+            \register_rest_route(self::REST_NAMESPACE, $route, $args);
         }
     }
 
     /**
-     * HTTP handler for GET /basket-data
-     * @param \WP_REST_Request $request
-     * @return \WP_REST_Response
+     * @throws \Exception
      */
-    public function handleGetBasketData(\WP_REST_Request $request): \WP_REST_Response
+    private function getBasketData($orderId): array
     {
-        $orderId = $request->get_param('order-id');
         if ($orderId) {
-            $order = wc_get_order($orderId);
+            $order = \wc_get_order($orderId);
             if (!$order) {
-                return new \WP_REST_Response(['error' => 'Invalid order id'], 400);
+                throw new \Exception('Invalid order id');
             }
 
             $basketId = $this->basketManager->getBasketId($order);
@@ -93,45 +92,49 @@ class Api
             $basketValue = $this->basketManager->getBasketTotals();
         }
 
-        $data = array(
+        return array(
             'basket_id' => $basketId,
             'basket_value' => $basketValue,
         );
-
-        return new \WP_REST_Response($data, 200);
     }
 
     /**
-     * HTTP handler for /login
+     * HTTP handler for POST /integration-data
      * @param \WP_REST_Request $request
      * @return \WP_REST_Response
      */
-    public function handlePostLogin(\WP_REST_Request $request): \WP_REST_Response
+    public function handleGetIntegrationData(\WP_REST_Request $request): \WP_REST_Response
     {
-        $email = $this->configManager->getIntegrationEmail();
-        $password = $this->configManager->getIntegrationPassword();
+        $orderId = $request->get_param('order-id');
+        $orderSuccess = $request->get_param('order-success') === 'true';
+        try {
+            $resp = $this->client->login($this->configManager->getIntegrationEmail(), $this->configManager->getIntegrationPassword());
+            $basket = $this->getBasketData($orderId);
 
-        if (empty($email) || empty($password)) {
-            return new \WP_REST_Response(['error' => 'Integration credentials are not defined.'], 400);
+            if ($orderSuccess) {
+                $order = \wc_get_order($orderId);
+                if (!$order) {
+                    error_log('Invalid order id. Cannot send claimable reward email');
+                    throw new \Exception('Invalid order id');
+                }
+
+                $this->client->sendClaimableRewardEmail(
+                    $order->get_billing_email(),
+                    $order->get_billing_first_name(),
+                    $basket['basket_id'],
+                    $basket['basket_value']
+                );
+            }
+
+            return new \WP_REST_Response([
+                'jwt' => $resp->jwt,
+                'basket_id' => $basket['basket_id'],
+                'basket_value' => $basket['basket_value'],
+            ], 200);
+        } catch (\Exception $e) {
+            error_log($e->getMessage());
+            return new \WP_REST_Response(['error' => 'Could not get basket data'], 400);
         }
-
-        $ch = curl_init("https://api.smilito.io/serve/v1/login");
-        $payload = json_encode([
-            'email' => $email,
-            'password' => $password
-        ]);
-
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $result = curl_exec($ch);
-        curl_close($ch);
-
-        if ($result === false) {
-            return new \WP_REST_Response(['error' => 'Unable to connect login API.'], 500);
-        }
-
-        return new \WP_REST_Response(json_decode($result, true), 200);
     }
+
 }

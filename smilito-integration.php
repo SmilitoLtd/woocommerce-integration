@@ -21,6 +21,7 @@ $deps = [
 	'Plugin.php',
 	'ConfigManager.php',
 	'BasketManager.php',
+	'Client/Client.php',
 	'Api.php',
 	'Block.php',
 	'Admin.php',
