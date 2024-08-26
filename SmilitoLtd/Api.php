@@ -111,19 +111,23 @@ class Api
             $resp = $this->client->login($this->configManager->getIntegrationEmail(), $this->configManager->getIntegrationPassword());
             $basket = $this->getBasketData($orderId);
 
-            if ($orderSuccess) {
+            if ($orderSuccess && $resp->settings->claimableRewardsEmailEnabled) {
                 $order = \wc_get_order($orderId);
                 if (!$order) {
                     error_log('Invalid order id. Cannot send claimable reward email');
                     throw new \Exception('Invalid order id');
                 }
 
-                $this->client->sendClaimableRewardEmail(
-                    $order->get_billing_email(),
-                    $order->get_billing_first_name(),
-                    $basket['basket_id'],
-                    $basket['basket_value']
-                );
+                try {
+                    $this->client->sendClaimableRewardEmail(
+                        $order->get_billing_email(),
+                        $order->get_billing_first_name(),
+                        $basket['basket_id'],
+                        $basket['basket_value']
+                    );
+                } catch (\Exception $e) {
+                    error_log($e->getMessage());
+                }
             }
 
             return new \WP_REST_Response([
