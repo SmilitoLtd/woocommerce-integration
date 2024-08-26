@@ -29,11 +29,12 @@ if (!window.SmilitoIntegrationRegistered) {
 	// Contains an order ID if we are looking at a order summary/payment confirmation page.
 	// This is set via a dynamic script added to the thank-you block.
 	window.SmilitoIntegrationOrderId = window.SmilitoIntegrationOrderId || null;
+	window.SmilitoIntegrationOrderSuccess = window.SmilitoIntegrationOrderSuccess || null;
 
 	const isOnOrderReceivedPage =
 		window.location.href.indexOf("/checkout/order-received/") > -1;
 	const smilitoTargetElementSelector = "#smilito_integration";
-	const smilitoClaimEnabled = isOnOrderReceivedPage ? true : false;
+	const smilitoClaimEnabled = isOnOrderReceivedPage;
 
 	const smilitoRunArgs = {
 		targetSelector: smilitoTargetElementSelector,
@@ -82,14 +83,21 @@ if (!window.SmilitoIntegrationRegistered) {
 		ob();
 	};
 
-	const fetchBasketData = async () => {
+	const fetchIntegrationData = async () => {
 		const orderId = SmilitoIntegrationOrderId || null;
+		const orderSuccess = (orderId && (SmilitoIntegrationOrderSuccess || false)) ? 'true' : 'false';
 		try {
 			const endpoint = orderId
-				? `/wp-json/smilito-integration/v1/basket-data?order-id=${orderId}`
-				: `/wp-json/smilito-integration/v1/basket-data`;
+				? `/wp-json/smilito-integration/v1/integration-data?order-id=${orderId}&order-success=${orderSuccess}`
+				: `/wp-json/smilito-integration/v1/integration-data`;
 
-			const response = await fetch(endpoint);
+			const response = await fetch(endpoint, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+
 			if (!response.ok) {
 				throw new Error("Response error");
 			}
@@ -100,37 +108,21 @@ if (!window.SmilitoIntegrationRegistered) {
 		}
 	};
 
-	const jwt = async () => {
-		try {
-			const response = await fetch("/wp-json/smilito-integration/v1/login", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-			});
-
-			if (!response.ok) {
-				throw new Error("Login response error");
-			}
-
-			const data = await response.json();
-			return data.jwt; // Assuming the JWT is in the 'token' field.
-		} catch (error) {
-			console.error("Failed to fetch JWT", error);
-			return null;
-		}
-	};
-
-	const fetchedBasketData = fetchBasketData();
+	const fetchedIntegrationData = fetchIntegrationData();
 
 	const getBasketValue = async () => {
-		const data = await fetchedBasketData;
+		const data = await fetchedIntegrationData;
 		return data.basket_value;
 	};
 
 	const getBasketId = async () => {
-		const data = await fetchedBasketData;
+		const data = await fetchedIntegrationData;
 		return data.basket_id;
+	};
+
+	const getJwt = async () => {
+		const data = await fetchedIntegrationData;
+		return data.jwt;
 	};
 
 	const runSmilito = () => {
@@ -160,7 +152,7 @@ if (!window.SmilitoIntegrationRegistered) {
 		const args = {
 			basketValue: getBasketValue,
 			basketId: getBasketId,
-			jwt: jwt,
+			jwt: getJwt,
 			callback: () => {
 				runSmilito();
 			},

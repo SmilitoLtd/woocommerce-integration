@@ -5,7 +5,7 @@
  * Description:       Integrate with the Smilito rewards platform.
  * Requires at least: 6.1
  * Requires PHP:      7.1
- * Version:           0.1.6
+ * Version:           0.1.7
  * Author:            SmilitoLtd
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -21,6 +21,7 @@ $deps = [
 	'Plugin.php',
 	'ConfigManager.php',
 	'BasketManager.php',
+	'Client/Client.php',
 	'Api.php',
 	'Block.php',
 	'Admin.php',

@@ -69,6 +69,7 @@ class Block
             ?>
             <script type="text/javascript">
                 window.SmilitoIntegrationOrderId = '<?php echo $orderId; ?>';
+                window.SmilitoIntegrationOrderSuccess = true;
             </script>
             <div id="smilito_integration"></div>
             <?php
