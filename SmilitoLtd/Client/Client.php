@@ -35,7 +35,7 @@ class Client
 
         $resp = new LoginResponse();
         $resp->jwt = $res['jwt'];
-        $resp->settings->claimableRewardsEmailEnabled = $res['claimable_reward_email_enabled'];
+        $resp->settings->claimableRewardsEmailEnabled = $res['claimable_rewards_email_enabled'];
 
         $this->jwt = $resp->jwt;
 
